@@ -1,3 +1,9 @@
+import LiteracyCard from "@/components/LiteracyCard";
+
 export default function Dashboard() {
-  return <div>Dashboard Page</div>;
+  return (
+    <div className="p-10">
+      <LiteracyCard />
+    </div>
+  );
 }
