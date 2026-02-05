@@ -10,40 +10,17 @@ import {
   Area,
   AreaChart,
 } from "recharts";
-import { TrendingUp, TrendingDown, Activity, Loader2 } from "lucide-react";
+import { TrendingUp, TrendingDown, Activity, Loader2, Sparkles, Lightbulb } from "lucide-react";
 
 interface DataPoint {
   month: string;
   value: number;
+  date?: string;
 }
 
-interface Insight {
-  trend: string;
-  volatility: string;
-  tip: string;
-}
-
-function analyzeTrend(data: DataPoint[]): Insight | null {
-  if (!data || data.length === 0) return null;
-
-  const first = data[0].value;
-  const last = data[data.length - 1].value;
-
-  const trend = last > first ? "Upward" : "Downward";
-
-  const values = data.map((d) => d.value);
-  const diff = Math.max(...values) - Math.min(...values);
-
-  let volatility = "Low";
-  if (diff > 40) volatility = "High";
-  else if (diff > 20) volatility = "Medium";
-
-  const tip =
-    trend === "Upward"
-      ? "Markets grow over time, but patience is key."
-      : "Short-term declines are normal. Avoid emotional decisions.";
-
-  return { trend, volatility, tip };
+interface TrendChartProps {
+  selectedYear: string;
+  onYearsLoaded: (years: string[]) => void;
 }
 
 const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) => {
@@ -51,28 +28,104 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
     return (
       <div className="bg-[#1f2937] border border-[#374151] rounded-xl p-4 shadow-xl">
         <p className="text-[#9ca3af] text-sm mb-1">{label}</p>
-        <p className="text-[#00A99D] text-xl font-bold">${payload[0].value}</p>
+        <p className="text-[#00A99D] text-xl font-bold">${payload[0].value.toFixed(2)}</p>
       </div>
     );
   }
   return null;
 };
 
-export default function TrendChart() {
+export default function TrendChart({ selectedYear, onYearsLoaded }: TrendChartProps) {
   const [data, setData] = useState<DataPoint[]>([]);
   const [loading, setLoading] = useState(true);
+  const [aiAnalysis, setAiAnalysis] = useState<string>("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
+  // Fetch data when year changes
   useEffect(() => {
-    fetch("/api/trend")
+    setLoading(true);
+    setAiAnalysis("");
+    
+    fetch(`/api/trend?year=${selectedYear}`)
       .then((res) => res.json())
-      .then((d) => {
-        setData(d);
+      .then((response) => {
+        setData(response.data || []);
+        if (response.availableYears) {
+          onYearsLoaded(response.availableYears);
+        }
         setLoading(false);
       })
-      .catch(() => setLoading(false));
-  }, []);
+      .catch(() => {
+        setData([]);
+        setLoading(false);
+      });
+  }, [selectedYear, onYearsLoaded]);
 
-  const insight = analyzeTrend(data);
+  // Calculate basic trend info
+  const getTrendInfo = () => {
+    if (!data || data.length === 0) return null;
+    
+    const first = data[0].value;
+    const last = data[data.length - 1].value;
+    const values = data.map(d => d.value);
+    const max = Math.max(...values);
+    const min = Math.min(...values);
+    const percentChange = ((last - first) / first * 100);
+    const volatilityRange = ((max - min) / first * 100);
+    
+    let volatility = "Low";
+    if (volatilityRange > 30) volatility = "High";
+    else if (volatilityRange > 15) volatility = "Medium";
+    
+    return {
+      trend: last > first ? "Upward" : "Downward",
+      percentChange: percentChange.toFixed(2),
+      volatility,
+      high: max.toFixed(2),
+      low: min.toFixed(2)
+    };
+  };
+
+  const trendInfo = getTrendInfo();
+
+  // Get AI analysis
+  const getAIAnalysis = async () => {
+    if (!data || data.length === 0) return;
+    
+    setIsAnalyzing(true);
+    setAiAnalysis("");
+
+    try {
+      const res = await fetch('/api/trend-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          data, 
+          timeframe: selectedYear === 'all' ? 'all available data' : selectedYear 
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed to get analysis');
+
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullResponse = '';
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          fullResponse += chunk;
+          setAiAnalysis(fullResponse);
+        }
+      }
+    } catch (error) {
+      setAiAnalysis("Unable to get AI analysis. Please try again.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -83,26 +136,36 @@ export default function TrendChart() {
     );
   }
 
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[300px]">
+        <p className="text-[#9ca3af]">No data available for this period</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Chart Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h3 className="text-xl font-bold text-[#f8fafc]">Market Trend</h3>
+          <h3 className="text-xl font-bold text-[#f8fafc]">
+            Market Trend {selectedYear !== 'all' && `(${selectedYear})`}
+          </h3>
           <p className="text-[#9ca3af] text-sm">{data.length} data points</p>
         </div>
-        {insight && (
+        {trendInfo && (
           <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
-            insight.trend === "Upward" 
+            trendInfo.trend === "Upward" 
               ? 'bg-[#00A99D]/20 text-[#00A99D]' 
               : 'bg-red-500/20 text-red-400'
           }`}>
-            {insight.trend === "Upward" ? (
+            {trendInfo.trend === "Upward" ? (
               <TrendingUp className="w-4 h-4" />
             ) : (
               <TrendingDown className="w-4 h-4" />
             )}
-            <span className="text-sm font-medium">{insight.trend} Trend</span>
+            <span className="text-sm font-medium">{trendInfo.percentChange}%</span>
           </div>
         )}
       </div>
@@ -131,6 +194,7 @@ export default function TrendChart() {
               tickLine={false}
               axisLine={{ stroke: '#374151' }}
               tickFormatter={(value) => `$${value}`}
+              domain={['auto', 'auto']}
             />
             <Tooltip content={<CustomTooltip />} />
             <Area
@@ -145,36 +209,77 @@ export default function TrendChart() {
         </ResponsiveContainer>
       </div>
 
-      {/* Insights */}
-      {insight && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-[#1f2937] rounded-xl p-4 border border-[#374151]/50 hover:border-[#00A99D]/30 transition-colors">
-            <div className="flex items-center gap-2 mb-2">
-              {insight.trend === "Upward" ? (
-                <TrendingUp className="w-5 h-5 text-[#00A99D]" />
-              ) : (
-                <TrendingDown className="w-5 h-5 text-red-400" />
-              )}
-              <span className="text-[#9ca3af] text-sm">Trend</span>
+      {/* Stats & AI Analysis */}
+      {trendInfo && (
+        <div className="space-y-4">
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-[#1f2937] rounded-xl p-4 border border-[#374151]/50">
+              <div className="flex items-center gap-2 mb-2">
+                {trendInfo.trend === "Upward" ? (
+                  <TrendingUp className="w-4 h-4 text-[#00A99D]" />
+                ) : (
+                  <TrendingDown className="w-4 h-4 text-red-400" />
+                )}
+                <span className="text-[#9ca3af] text-sm">Trend</span>
+              </div>
+              <p className="text-[#f8fafc] text-lg font-semibold">{trendInfo.trend}</p>
             </div>
-            <p className="text-[#f8fafc] text-lg font-semibold">{insight.trend}</p>
-          </div>
-          
-          <div className="bg-[#1f2937] rounded-xl p-4 border border-[#374151]/50 hover:border-[#F5A623]/30 transition-colors">
-            <div className="flex items-center gap-2 mb-2">
-              <Activity className="w-5 h-5 text-[#F5A623]" />
-              <span className="text-[#9ca3af] text-sm">Volatility</span>
+            
+            <div className="bg-[#1f2937] rounded-xl p-4 border border-[#374151]/50">
+              <div className="flex items-center gap-2 mb-2">
+                <Activity className="w-4 h-4 text-[#F5A623]" />
+                <span className="text-[#9ca3af] text-sm">Volatility</span>
+              </div>
+              <p className="text-[#f8fafc] text-lg font-semibold">{trendInfo.volatility}</p>
             </div>
-            <p className="text-[#f8fafc] text-lg font-semibold">{insight.volatility}</p>
-          </div>
-          
-          <div className="bg-[#1f2937] rounded-xl p-4 border border-[#374151]/50 hover:border-[#4A90E2]/30 transition-colors md:col-span-1">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-[#4A90E2]">*</span>
-              <span className="text-[#9ca3af] text-sm">Learning Tip</span>
+            
+            <div className="bg-[#1f2937] rounded-xl p-4 border border-[#374151]/50">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="w-4 h-4 text-[#00A99D]" />
+                <span className="text-[#9ca3af] text-sm">Period High</span>
+              </div>
+              <p className="text-[#f8fafc] text-lg font-semibold">${trendInfo.high}</p>
             </div>
-            <p className="text-[#e5e7eb] text-sm leading-relaxed">{insight.tip}</p>
+            
+            <div className="bg-[#1f2937] rounded-xl p-4 border border-[#374151]/50">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingDown className="w-4 h-4 text-red-400" />
+                <span className="text-[#9ca3af] text-sm">Period Low</span>
+              </div>
+              <p className="text-[#f8fafc] text-lg font-semibold">${trendInfo.low}</p>
+            </div>
           </div>
+
+          {/* AI Analysis Button */}
+          <button
+            onClick={getAIAnalysis}
+            disabled={isAnalyzing}
+            className="w-full py-3 px-4 rounded-xl font-medium flex items-center justify-center gap-2 transition-all duration-300 bg-gradient-to-r from-[#4A90E2] to-[#00A99D] text-white hover:shadow-lg hover:shadow-[#4A90E2]/30"
+          >
+            {isAnalyzing ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Analyzing with AI...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-5 h-5" />
+                Get AI Insights & Learning Tips
+              </>
+            )}
+          </button>
+
+          {/* AI Analysis Result */}
+          {aiAnalysis && (
+            <div className="p-5 bg-gradient-to-br from-[#1f2937] to-[#111827] rounded-xl border border-[#4A90E2]/30">
+              <div className="flex items-center gap-2 mb-3">
+                <Lightbulb className="w-5 h-5 text-[#F5A623]" />
+                <span className="text-[#F5A623] font-medium">AI Analysis & Learning Tip</span>
+              </div>
+              <p className="text-[#e5e7eb] leading-relaxed">{aiAnalysis}</p>
+            </div>
+          )}
         </div>
       )}
     </div>

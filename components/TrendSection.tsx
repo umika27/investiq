@@ -7,6 +7,8 @@ import { Activity, BarChart2 } from "lucide-react";
 export default function TrendSection() {
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
+  const [selectedYear, setSelectedYear] = useState<string>("all");
+  const [availableYears, setAvailableYears] = useState<string[]>([]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -44,13 +46,13 @@ export default function TrendSection() {
             Understand <span className="text-gradient">Market Trends</span>
           </h2>
           <p className="text-[#9ca3af] text-lg max-w-xl mx-auto">
-            Visualize market movements and learn to interpret trends like a pro
+            Visualize market movements and get AI-powered insights and learning tips
           </p>
         </div>
 
         {/* Chart Card */}
         <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <div className="glass rounded-3xl p-8 hover-lift border border-[#374151]/50 hover:border-[#4A90E2]/30 transition-all duration-300">
+          <div className="glass rounded-3xl p-8 border border-[#374151]/50">
             {/* Card Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
               <div className="flex items-center gap-4">
@@ -59,22 +61,33 @@ export default function TrendSection() {
                 </div>
                 <div>
                   <h3 className="text-2xl font-bold text-[#f8fafc]">Market Performance</h3>
-                  <p className="text-[#9ca3af]">Real-time market data visualization</p>
+                  <p className="text-[#9ca3af]">Select a year to view historical data</p>
                 </div>
               </div>
               
-              {/* Time filters */}
-              <div className="flex items-center gap-2 bg-[#1f2937] p-1 rounded-xl">
-                {['1D', '1W', '1M', '1Y'].map((period, i) => (
+              {/* Year filters */}
+              <div className="flex items-center gap-2 bg-[#1f2937] p-1 rounded-xl flex-wrap">
+                <button
+                  onClick={() => setSelectedYear("all")}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    selectedYear === "all"
+                      ? 'bg-[#00A99D] text-[#0a0f1a]' 
+                      : 'text-[#9ca3af] hover:text-[#f8fafc] hover:bg-[#374151]'
+                  }`}
+                >
+                  All
+                </button>
+                {availableYears.slice(0, 5).map((year) => (
                   <button
-                    key={period}
+                    key={year}
+                    onClick={() => setSelectedYear(year)}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      i === 2 
+                      selectedYear === year
                         ? 'bg-[#00A99D] text-[#0a0f1a]' 
                         : 'text-[#9ca3af] hover:text-[#f8fafc] hover:bg-[#374151]'
                     }`}
                   >
-                    {period}
+                    {year}
                   </button>
                 ))}
               </div>
@@ -82,31 +95,10 @@ export default function TrendSection() {
 
             {/* Chart */}
             <div className="bg-[#111827] rounded-2xl p-6">
-              <TrendChart />
-            </div>
-
-            {/* Quick Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-              {[
-                { label: 'Market Cap', value: '$2.4T', change: '+2.4%', positive: true },
-                { label: 'Volume', value: '$89B', change: '+12%', positive: true },
-                { label: 'Volatility', value: 'Medium', change: '-5%', positive: true },
-                { label: '52W High', value: '$156', change: '-3%', positive: false },
-              ].map((stat) => (
-                <div key={stat.label} className="bg-[#1f2937] rounded-xl p-4 hover:bg-[#1f2937]/80 transition-colors">
-                  <p className="text-[#9ca3af] text-sm mb-1">{stat.label}</p>
-                  <div className="flex items-center gap-2">
-                    <p className="text-[#f8fafc] text-xl font-bold">{stat.value}</p>
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                      stat.positive 
-                        ? 'bg-[#00A99D]/20 text-[#00A99D]' 
-                        : 'bg-red-500/20 text-red-400'
-                    }`}>
-                      {stat.change}
-                    </span>
-                  </div>
-                </div>
-              ))}
+              <TrendChart 
+                selectedYear={selectedYear} 
+                onYearsLoaded={setAvailableYears}
+              />
             </div>
           </div>
         </div>

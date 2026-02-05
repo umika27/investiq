@@ -16,7 +16,8 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: "InvestIQ - Learn While You Invest",
-  description: "Smart investing made simple. Learn financial concepts, understand market trends, and simulate your investment journey with InvestIQ.",
+  description:
+    "Smart investing made simple. Learn financial concepts, understand market trends, and simulate your investment journey with InvestIQ.",
 };
 
 export default function RootLayout({
@@ -27,6 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
+        suppressHydrationWarning
         className={`${plusJakarta.variable} ${spaceGrotesk.variable} antialiased font-sans`}
       >
         {children}

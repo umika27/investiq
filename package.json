@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ai-sdk/xai": "^3.0.47",
+    "ai": "^6.0.71",
     "axios": "^1.13.4",
     "framer-motion": "^12.31.0",
     "groq-sdk": "^0.37.0",
