@@ -2,48 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { PieChart, Shield, Sparkles, Loader2 } from "lucide-react";
-import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Sector } from "recharts";
+import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer } from "recharts";
 
 interface AllocationData {
   name: string;
   value: number;
   color: string;
 }
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
-const renderActiveShape = (props: any) => {
-  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, value } = props;
-
-  return (
-    <g>
-      <Sector
-        cx={cx}
-        cy={cy}
-        innerRadius={innerRadius}
-        outerRadius={outerRadius + 8}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        fill={fill}
-        style={{ filter: 'drop-shadow(0 0 10px rgba(0, 169, 157, 0.5))' }}
-      />
-      <Sector
-        cx={cx}
-        cy={cy}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        innerRadius={outerRadius + 12}
-        outerRadius={outerRadius + 14}
-        fill={fill}
-      />
-      <text x={cx} y={cy - 10} textAnchor="middle" fill="#f8fafc" className="text-lg font-bold">
-        {payload.name}
-      </text>
-      <text x={cx} y={cy + 15} textAnchor="middle" fill="#9ca3af" className="text-sm">
-        {`${value}%`}
-      </text>
-    </g>
-  );
-};
 
 export default function DashboardSection() {
   const [isVisible, setIsVisible] = useState(false);
@@ -53,7 +18,6 @@ export default function DashboardSection() {
   const [equity, setEquity] = useState(50);
   const [gold, setGold] = useState(30);
   const [bonds, setBonds] = useState(20);
-  const [activeIndex, setActiveIndex] = useState(0);
   
   // AI analysis state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -196,30 +160,33 @@ export default function DashboardSection() {
               <ResponsiveContainer width="100%" height={220}>
                 <RechartsPie>
                   <Pie
-                    activeIndex={activeIndex}
-                    activeShape={renderActiveShape}
                     data={allocationData}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
                     outerRadius={85}
                     dataKey="value"
-                    onMouseEnter={(_, index) => setActiveIndex(index)}
-                    style={{ cursor: 'pointer' }}
+                    stroke="none"
                   >
                     {allocationData.map((entry, index) => (
                       <Cell 
                         key={`cell-${index}`} 
                         fill={entry.color}
-                        style={{ 
-                          filter: index === activeIndex ? 'brightness(1.2)' : 'brightness(1)',
-                          transition: 'all 0.3s ease'
-                        }}
                       />
                     ))}
                   </Pie>
                 </RechartsPie>
               </ResponsiveContainer>
+            </div>
+
+            {/* Legend */}
+            <div className="flex justify-center gap-6 mb-4">
+              {allocationData.map((item) => (
+                <div key={item.name} className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                  <span className="text-[#9ca3af] text-sm">{item.name}: {item.value}%</span>
+                </div>
+              ))}
             </div>
 
             {/* Allocation Total */}
