@@ -1,12 +1,26 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Sparkles, TrendingUp, Shield, ArrowRight, ChevronDown, Zap, BarChart3, Users } from "lucide-react";
 
 export default function HeroSection() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isVisible, setIsVisible] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Generate particle positions only after mounting to avoid hydration mismatch
+  const particles = useMemo(() => {
+    if (!isMounted) return [];
+    return [...Array(20)].map((_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      delay: Math.random() * 5,
+      duration: 5 + Math.random() * 5,
+    }));
+  }, [isMounted]);
 
   useEffect(() => {
+    setIsMounted(true);
     setIsVisible(true);
     const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({
@@ -48,15 +62,15 @@ export default function HeroSection() {
 
           {/* Animated particles */}
           <div className="absolute inset-0 overflow-hidden">
-            {[...Array(20)].map((_, i) => (
+            {particles.map((particle) => (
               <div
-                key={i}
+                key={particle.id}
                 className="absolute w-1 h-1 bg-[#00A99D]/40 rounded-full animate-float"
                 style={{
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                  animationDelay: `${Math.random() * 5}s`,
-                  animationDuration: `${5 + Math.random() * 5}s`,
+                  left: `${particle.left}%`,
+                  top: `${particle.top}%`,
+                  animationDelay: `${particle.delay}s`,
+                  animationDuration: `${particle.duration}s`,
                 }}
               />
             ))}
