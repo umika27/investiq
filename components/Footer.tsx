@@ -18,11 +18,7 @@ export default function Footer() {
     { icon: Mail, href: "#", label: "Email" },
   ];
 
-  const footerLinks = [
-    { title: "Product", links: ["Features", "Pricing", "Demo", "Updates"] },
-    { title: "Company", links: ["About", "Blog", "Careers", "Press"] },
-    { title: "Resources", links: ["Documentation", "Help Center", "Community", "Contact"] },
-  ];
+
 
   return (
     <footer className="relative bg-gradient-to-b from-[#111827] to-[#0a0a0a] text-white overflow-hidden">
@@ -47,7 +43,7 @@ export default function Footer() {
             <p className="text-gray-400 mb-6 max-w-sm leading-relaxed">
               Empowering investors with knowledge. Learn smart investing strategies before putting your money to work.
             </p>
-            
+
             {/* Newsletter */}
             <div className="flex gap-2">
               <input
@@ -71,8 +67,8 @@ export default function Footer() {
                 <ul className="space-y-2">
                   {section.links.map((link) => (
                     <li key={link}>
-                      <a 
-                        href="#" 
+                      <a
+                        href="#"
                         className="text-gray-400 hover:text-[#00A99D] transition-colors duration-300 text-sm"
                       >
                         {link}
@@ -93,7 +89,7 @@ export default function Footer() {
           {/* Copyright */}
           <div className="flex items-center gap-1 text-gray-400 text-sm">
             <span>Made with</span>
-            <Heart 
+            <Heart
               className={`w-4 h-4 text-red-500 transition-transform duration-300 ${isHovered ? 'scale-125' : ''}`}
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
