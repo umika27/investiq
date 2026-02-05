@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { TrendingUp, BarChart3, Activity } from "lucide-react";
+import { TrendingUp, BarChart3, Activity, Brain, Sparkles } from "lucide-react";
 import TrendChart from "@/components/trends/TrendChart";
 
 export default function TrendSection() {
@@ -36,9 +36,10 @@ export default function TrendSection() {
       <div className="relative max-w-6xl mx-auto px-6">
         {/* Section Header */}
         <div className={`text-center mb-16 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-          <div className="inline-flex items-center gap-2 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full mb-4 shadow-sm">
-            <Activity className="w-4 h-4 text-[#00A99D]" />
-            <span className="text-[#00A99D] text-sm font-semibold tracking-wide uppercase">Market Analytics</span>
+          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-white/80 to-white/60 backdrop-blur-sm px-4 py-2 rounded-full mb-4 shadow-sm border border-white/50">
+            <Brain className="w-4 h-4 text-[#00A99D]" />
+            <span className="text-[#00A99D] text-sm font-semibold tracking-wide uppercase">AI-Powered Analytics</span>
+            <Sparkles className="w-4 h-4 text-[#F5A623]" />
           </div>
           <h2 className="text-4xl md:text-5xl font-bold text-[#111827] mb-4 tracking-tight">
             Understand Market{" "}
@@ -48,16 +49,16 @@ export default function TrendSection() {
             </span>
           </h2>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto leading-relaxed">
-            Visualize market movements and learn to interpret financial data
+            Select different time periods and get AI-powered insights on market volatility and trends
           </p>
         </div>
 
         {/* Stats Row */}
         <div className={`grid grid-cols-3 gap-4 mb-10 ${isVisible ? 'animate-fade-in-up animation-delay-200' : 'opacity-0'}`}>
           {[
-            { label: "Data Points", value: "12", icon: BarChart3 },
-            { label: "Time Period", value: "1Y", icon: Activity },
-            { label: "Analysis", value: "Live", icon: TrendingUp },
+            { label: "Historical Data", value: "10Y+", icon: BarChart3 },
+            { label: "Year Selection", value: "Custom", icon: Activity },
+            { label: "AI Analysis", value: "Grok", icon: Brain },
           ].map((stat, index) => (
             <div 
               key={stat.label}
