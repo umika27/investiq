@@ -1,22 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Info, TrendingUp, Shield, Clock } from "lucide-react";
+import { Info, TrendingUp, Shield, Clock, AlertCircle, CheckCircle } from "lucide-react";
 import LiteracyCard from "@/components/simulator/LiteracyCard";
 
 export default function Simulator() {
-  // Slider states with dummy values
+  // Slider states
   const [monthlySIP, setMonthlySIP] = useState(5000);
   const [equity, setEquity] = useState(50);
   const [gold, setGold] = useState(30);
   const [bonds, setBonds] = useState(20);
+  const [years, setYears] = useState(10);
 
   // Toggle state
   const [includeInflation, setIncludeInflation] = useState(false);
 
   // Literacy popup state
   const [showLiteracy, setShowLiteracy] = useState(false);
+
+  // Expected annual returns (historical averages)
+  const RETURNS = {
+    equity: 0.12, // 12% annual return
+    gold: 0.08,   // 8% annual return
+    bonds: 0.07,  // 7% annual return
+  };
+
+  // Inflation rate
+  const INFLATION_RATE = 0.06; // 6% annual inflation
 
   // Animation variants
   const containerVariants = {
@@ -46,16 +57,108 @@ export default function Simulator() {
   // Allocation total
   const allocationTotal = equity + gold + bonds;
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-teal-600 text-white py-6 px-4 shadow-lg">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl md:text-3xl font-bold">Investment Simulator</h1>
-          <p className="text-teal-100 mt-1">Plan your financial future</p>
-        </div>
-      </header>
+  // Smart allocation adjustment - when one slider changes, adjust others proportionally
+  const handleAllocationChange = (type, newValue) => {
+    const remaining = 100 - newValue;
+    
+    if (type === "equity") {
+      const otherTotal = gold + bonds;
+      if (otherTotal === 0) {
+        setEquity(newValue);
+        setGold(remaining / 2);
+        setBonds(remaining / 2);
+      } else {
+        setEquity(newValue);
+        setGold(Math.round((gold / otherTotal) * remaining));
+        setBonds(Math.round((bonds / otherTotal) * remaining));
+      }
+    } else if (type === "gold") {
+      const otherTotal = equity + bonds;
+      if (otherTotal === 0) {
+        setGold(newValue);
+        setEquity(remaining / 2);
+        setBonds(remaining / 2);
+      } else {
+        setGold(newValue);
+        setEquity(Math.round((equity / otherTotal) * remaining));
+        setBonds(Math.round((bonds / otherTotal) * remaining));
+      }
+    } else if (type === "bonds") {
+      const otherTotal = equity + gold;
+      if (otherTotal === 0) {
+        setBonds(newValue);
+        setEquity(remaining / 2);
+        setGold(remaining / 2);
+      } else {
+        setBonds(newValue);
+        setEquity(Math.round((equity / otherTotal) * remaining));
+        setGold(Math.round((gold / otherTotal) * remaining));
+      }
+    }
+  };
 
+  // Calculate estimated future value using SIP formula
+  const calculations = useMemo(() => {
+    // Weighted average return based on allocation
+    const weightedReturn = 
+      (equity / 100) * RETURNS.equity +
+      (gold / 100) * RETURNS.gold +
+      (bonds / 100) * RETURNS.bonds;
+
+    // Adjust for inflation if enabled
+    const effectiveReturn = includeInflation 
+      ? weightedReturn - INFLATION_RATE 
+      : weightedReturn;
+
+    // Monthly rate
+    const monthlyRate = effectiveReturn / 12;
+    const totalMonths = years * 12;
+
+    // SIP Future Value Formula: P * [((1 + r)^n - 1) / r] * (1 + r)
+    let futureValue;
+    if (monthlyRate === 0) {
+      futureValue = monthlySIP * totalMonths;
+    } else {
+      futureValue = monthlySIP * 
+        (((Math.pow(1 + monthlyRate, totalMonths) - 1) / monthlyRate) * (1 + monthlyRate));
+    }
+
+    // Total invested
+    const totalInvested = monthlySIP * totalMonths;
+
+    // Gains
+    const totalGains = futureValue - totalInvested;
+
+    // Risk calculation based on equity percentage
+    let riskLevel, riskColor, riskDescription;
+    if (equity >= 70) {
+      riskLevel = "High";
+      riskColor = "text-red-600";
+      riskDescription = "Aggressive growth";
+    } else if (equity >= 40) {
+      riskLevel = "Moderate";
+      riskColor = "text-amber-600";
+      riskDescription = "Balanced portfolio";
+    } else {
+      riskLevel = "Low";
+      riskColor = "text-green-600";
+      riskDescription = "Conservative approach";
+    }
+
+    return {
+      futureValue: Math.round(futureValue),
+      totalInvested,
+      totalGains: Math.round(totalGains),
+      weightedReturn: (weightedReturn * 100).toFixed(1),
+      effectiveReturn: (effectiveReturn * 100).toFixed(1),
+      riskLevel,
+      riskColor,
+      riskDescription,
+    };
+  }, [monthlySIP, equity, gold, bonds, years, includeInflation]);
+
+  return (
+    <div className="bg-gray-50">
       <main className="max-w-4xl mx-auto p-4 md:p-6">
         <motion.div
           variants={containerVariants}
@@ -164,7 +267,10 @@ export default function Simulator() {
               {/* Equity Slider */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-700 font-medium">Equity</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-700 font-medium">Equity</span>
+                    <span className="text-xs text-gray-400">(12% avg return)</span>
+                  </div>
                   <motion.span
                     key={equity}
                     initial={{ opacity: 0 }}
@@ -179,7 +285,7 @@ export default function Simulator() {
                   min="0"
                   max="100"
                   value={equity}
-                  onChange={(e) => setEquity(Number(e.target.value))}
+                  onChange={(e) => handleAllocationChange("equity", Number(e.target.value))}
                   className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-teal"
                 />
               </div>
@@ -187,7 +293,10 @@ export default function Simulator() {
               {/* Gold Slider */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-700 font-medium">Gold</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-700 font-medium">Gold</span>
+                    <span className="text-xs text-gray-400">(8% avg return)</span>
+                  </div>
                   <motion.span
                     key={gold}
                     initial={{ opacity: 0 }}
@@ -202,7 +311,7 @@ export default function Simulator() {
                   min="0"
                   max="100"
                   value={gold}
-                  onChange={(e) => setGold(Number(e.target.value))}
+                  onChange={(e) => handleAllocationChange("gold", Number(e.target.value))}
                   className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-gold"
                 />
               </div>
@@ -210,7 +319,10 @@ export default function Simulator() {
               {/* Bonds Slider */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-700 font-medium">Bonds</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-700 font-medium">Bonds</span>
+                    <span className="text-xs text-gray-400">(7% avg return)</span>
+                  </div>
                   <motion.span
                     key={bonds}
                     initial={{ opacity: 0 }}
@@ -225,10 +337,69 @@ export default function Simulator() {
                   min="0"
                   max="100"
                   value={bonds}
-                  onChange={(e) => setBonds(Number(e.target.value))}
+                  onChange={(e) => handleAllocationChange("bonds", Number(e.target.value))}
                   className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-blue"
                 />
               </div>
+            </div>
+
+            {/* Allocation Status */}
+            {allocationTotal !== 100 && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2"
+              >
+                <AlertCircle className="w-5 h-5 text-amber-600" />
+                <span className="text-sm text-amber-700">
+                  Total allocation is {allocationTotal}%. Adjust sliders to reach 100%.
+                </span>
+              </motion.div>
+            )}
+            {allocationTotal === 100 && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-4 p-3 bg-green-50 border border-green-200 rounded-xl flex items-center gap-2"
+              >
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-sm text-green-700">
+                  Perfect! Your allocation totals 100%.
+                </span>
+              </motion.div>
+            )}
+          </motion.div>
+
+          {/* Time Horizon Slider */}
+          <motion.div
+            variants={itemVariants}
+            className="bg-white rounded-2xl p-6 shadow-sm"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-800">
+                Investment Duration
+              </h2>
+              <motion.span
+                key={years}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-2xl font-bold text-teal-600"
+              >
+                {years} {years === 1 ? "Year" : "Years"}
+              </motion.span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="30"
+              step="1"
+              value={years}
+              onChange={(e) => setYears(Number(e.target.value))}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-teal"
+            />
+            <div className="flex justify-between text-sm text-gray-500 mt-2">
+              <span>1 Year</span>
+              <span>30 Years</span>
             </div>
           </motion.div>
 
@@ -243,7 +414,7 @@ export default function Simulator() {
                   Include Inflation
                 </h2>
                 <p className="text-sm text-gray-500 mt-1">
-                  Adjust returns for inflation impact
+                  Adjust returns for 6% annual inflation
                 </p>
               </div>
               <button
@@ -259,6 +430,15 @@ export default function Simulator() {
                 />
               </button>
             </div>
+            {includeInflation && (
+              <motion.p 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                className="text-xs text-teal-600 mt-3 bg-teal-50 p-2 rounded-lg"
+              >
+                Values shown in today&apos;s purchasing power
+              </motion.p>
+            )}
           </motion.div>
 
           
@@ -271,18 +451,30 @@ export default function Simulator() {
             {/* Estimated Value Card */}
             <motion.div
               whileHover={{ scale: 1.02 }}
-              className="bg-white rounded-2xl p-5 shadow-sm"
+              className="bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl p-5 shadow-lg text-white"
             >
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-teal-100 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-teal-600" />
+                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-gray-600 font-medium">Estimated Value</span>
+                <span className="text-teal-100 font-medium">Future Value</span>
               </div>
-              <p className="text-2xl font-bold text-gray-800">
-                {formatCurrency(320000)}
+              <motion.p 
+                key={calculations.futureValue}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-3xl font-bold"
+              >
+                {formatCurrency(calculations.futureValue)}
+              </motion.p>
+              <p className="text-sm text-teal-100 mt-1">
+                After {years} {years === 1 ? "year" : "years"}
+                {includeInflation && " (inflation-adjusted)"}
               </p>
-              <p className="text-sm text-gray-500 mt-1">After 10 years</p>
+              <div className="mt-3 pt-3 border-t border-white/20 flex justify-between text-sm">
+                <span className="text-teal-100">Invested: {formatCurrency(calculations.totalInvested)}</span>
+                <span className="text-white font-medium">Gains: {formatCurrency(calculations.totalGains)}</span>
+              </div>
             </motion.div>
 
             {/* Risk Level Card */}
@@ -296,11 +488,23 @@ export default function Simulator() {
                 </div>
                 <span className="text-gray-600 font-medium">Risk Level</span>
               </div>
-              <p className="text-2xl font-bold text-gray-800">Moderate</p>
-              <p className="text-sm text-gray-500 mt-1">Balanced portfolio</p>
+              <motion.p 
+                key={calculations.riskLevel}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className={`text-2xl font-bold ${calculations.riskColor}`}
+              >
+                {calculations.riskLevel}
+              </motion.p>
+              <p className="text-sm text-gray-500 mt-1">{calculations.riskDescription}</p>
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <p className="text-xs text-gray-500">
+                  Expected return: <span className="font-semibold text-gray-700">{calculations.effectiveReturn}% p.a.</span>
+                </p>
+              </div>
             </motion.div>
 
-            {/* Time Horizon Card */}
+            {/* Summary Card */}
             <motion.div
               whileHover={{ scale: 1.02 }}
               className="bg-white rounded-2xl p-5 shadow-sm"
@@ -309,10 +513,24 @@ export default function Simulator() {
                 <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
                   <Clock className="w-5 h-5 text-blue-600" />
                 </div>
-                <span className="text-gray-600 font-medium">Time Horizon</span>
+                <span className="text-gray-600 font-medium">Investment Summary</span>
               </div>
-              <p className="text-2xl font-bold text-gray-800">10 Years</p>
-              <p className="text-sm text-gray-500 mt-1">Long-term growth</p>
+              <motion.p 
+                key={years}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-2xl font-bold text-gray-800"
+              >
+                {years} {years === 1 ? "Year" : "Years"}
+              </motion.p>
+              <p className="text-sm text-gray-500 mt-1">
+                {years <= 3 ? "Short-term" : years <= 7 ? "Medium-term" : "Long-term"} investment
+              </p>
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <p className="text-xs text-gray-500">
+                  Monthly SIP: <span className="font-semibold text-gray-700">{formatCurrency(monthlySIP)}</span>
+                </p>
+              </div>
             </motion.div>
           </motion.div>
         </motion.div>
