@@ -1,15 +1,13 @@
 import { streamText } from 'ai'
 import { xai } from '@ai-sdk/xai'
-import { NextRequest } from 'next/server'
+import type { NextRequest } from 'next/server'
 
 export async function POST(request: NextRequest) {
   try {
     const { data, timeframe } = await request.json()
 
     if (!data || data.length === 0) {
-      return new Response(JSON.stringify({ 
-        error: 'No trend data provided' 
-      }), { status: 400 })
+      return new Response('No trend data provided', { status: 400 })
     }
 
     const values = data.map((d: { value: number }) => d.value)
@@ -35,7 +33,7 @@ Provide:
 Keep response concise (3-4 sentences total). Focus on educational value.`
 
     const result = streamText({
-      model: xai('grok-3-mini', {
+      model: xai('grok-4', {
         apiKey: process.env.XAI_API_KEY,
       }),
       prompt: prompt,
@@ -45,8 +43,6 @@ Keep response concise (3-4 sentences total). Focus on educational value.`
     return result.toTextStreamResponse()
   } catch (error) {
     console.error('Error analyzing trend:', error)
-    return new Response(JSON.stringify({ 
-      error: 'Failed to analyze market trend' 
-    }), { status: 500 })
+    return new Response('Failed to analyze market trend', { status: 500 })
   }
 }
