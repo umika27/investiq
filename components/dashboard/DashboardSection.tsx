@@ -202,7 +202,7 @@ export default function DashboardSection() {
             </div>
 
             {/* Pie Chart */}
-            <div className="mb-6">
+            <div className="mb-6" style={{ width: '100%', height: 220 }}>
               <ResponsiveContainer width="100%" height={220}>
                 <RechartsPie>
                   <Pie
