@@ -1,154 +1,126 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 
 export default function RiskRing() {
-  const [animatedValue, setAnimatedValue] = useState(0);
-  const [isVisible, setIsVisible] = useState(false);
-  const ref = useRef(null);
-  const targetValue = 70;
+  const [progress, setProgress] = useState(0);
+  const targetProgress = 70;
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-        }
-      },
-      { threshold: 0.5 }
-    );
-
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!isVisible) return;
-
-    const duration = 1500;
-    const steps = 60;
-    const increment = targetValue / steps;
-    let current = 0;
-
-    const timer = setInterval(() => {
-      current += increment;
-      if (current >= targetValue) {
-        setAnimatedValue(targetValue);
-        clearInterval(timer);
-      } else {
-        setAnimatedValue(Math.floor(current));
+    const timer = setTimeout(() => {
+      if (progress < targetProgress) {
+        setProgress(prev => Math.min(prev + 1, targetProgress));
       }
-    }, duration / steps);
-
-    return () => clearInterval(timer);
-  }, [isVisible]);
+    }, 20);
+    return () => clearTimeout(timer);
+  }, [progress]);
 
   const circumference = 2 * Math.PI * 56;
-  const strokeDashoffset = circumference - (animatedValue / 100) * circumference;
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
 
-  const getRiskColor = (value) => {
-    if (value < 40) return { color: "#22C55E", label: "Low Risk", bg: "bg-emerald-500/10" };
-    if (value < 70) return { color: "#F59E0B", label: "Moderate Risk", bg: "bg-amber-500/10" };
-    return { color: "#EF4444", label: "High Risk", bg: "bg-red-500/10" };
+  const getRiskLevel = (value) => {
+    if (value < 30) return { label: "Low Risk", color: "#00A99D" };
+    if (value < 70) return { label: "Moderate Risk", color: "#F5A623" };
+    return { label: "High Risk", color: "#ef4444" };
   };
 
-  const risk = getRiskColor(animatedValue);
+  const risk = getRiskLevel(progress);
 
   return (
-    <div ref={ref} className="flex flex-col items-center py-4">
-      {/* Ring Container */}
-      <div className="relative w-48 h-48 group">
-        {/* Glow effect */}
-        <div 
-          className="absolute inset-4 rounded-full blur-xl opacity-30 transition-opacity duration-500 group-hover:opacity-50"
-          style={{ backgroundColor: risk.color }}
-        />
-        
-        {/* SVG Ring */}
+    <div className="flex flex-col items-center space-y-6">
+      {/* Ring */}
+      <div className="relative w-48 h-48">
         <svg className="w-full h-full -rotate-90" viewBox="0 0 128 128">
-          {/* Background ring */}
-          <circle
-            cx="64"
-            cy="64"
-            r="56"
-            stroke="#E5E7EB"
-            strokeWidth="12"
-            fill="none"
+          {/* Background circle */}
+          <circle 
+            cx="64" 
+            cy="64" 
+            r="56" 
+            stroke="#1f2937" 
+            strokeWidth="12" 
+            fill="none" 
           />
-          {/* Progress ring */}
+          {/* Progress circle with gradient */}
+          <defs>
+            <linearGradient id="riskGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#00A99D" />
+              <stop offset="50%" stopColor="#F5A623" />
+              <stop offset="100%" stopColor="#ef4444" />
+            </linearGradient>
+          </defs>
           <circle
             cx="64"
             cy="64"
             r="56"
-            stroke={risk.color}
+            stroke="url(#riskGradient)"
             strokeWidth="12"
             fill="none"
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
-            style={{
-              transition: 'stroke-dashoffset 0.5s ease-out, stroke 0.3s ease',
+            style={{ 
+              transition: 'stroke-dashoffset 0.3s ease-out',
+              filter: 'drop-shadow(0 0 10px rgba(245, 166, 35, 0.5))'
             }}
           />
-          {/* Decorative dots */}
-          {[0, 25, 50, 75, 100].map((tick, i) => {
-            const angle = (tick / 100) * 360 - 90;
-            const rad = (angle * Math.PI) / 180;
-            const x = 64 + 56 * Math.cos(rad);
-            const y = 64 + 56 * Math.sin(rad);
-            return (
-              <circle
-                key={i}
-                cx={x}
-                cy={y}
-                r="2"
-                fill={tick <= animatedValue ? risk.color : "#E5E7EB"}
-                style={{ transition: 'fill 0.3s ease' }}
-              />
-            );
-          })}
         </svg>
-
+        
         {/* Center content */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span 
-            className="text-4xl font-bold transition-colors duration-300"
-            style={{ color: risk.color }}
-          >
-            {animatedValue}%
-          </span>
-          <span className="text-sm text-gray-500 mt-1">Risk Score</span>
+          <span className="text-5xl font-bold text-[#f8fafc]">{progress}%</span>
+          <span className="text-[#9ca3af] text-sm mt-1">Risk Score</span>
         </div>
       </div>
 
-      {/* Risk Label */}
-      <div className={`mt-6 px-4 py-2 rounded-full ${risk.bg} transition-all duration-300`}>
-        <span 
-          className="text-sm font-semibold"
-          style={{ color: risk.color }}
-        >
-          {risk.label}
-        </span>
+      {/* Risk Level Badge */}
+      <div 
+        className="px-4 py-2 rounded-full text-sm font-medium"
+        style={{ 
+          backgroundColor: `${risk.color}20`,
+          color: risk.color
+        }}
+      >
+        {risk.label}
       </div>
 
-      {/* Risk Indicators */}
-      <div className="flex items-center gap-4 mt-6">
-        {[
-          { label: "Low", color: "#22C55E", range: "0-40%" },
-          { label: "Medium", color: "#F59E0B", range: "40-70%" },
-          { label: "High", color: "#EF4444", range: "70-100%" },
-        ].map((level) => (
-          <div key={level.label} className="flex items-center gap-2">
-            <span 
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: level.color }}
-            />
-            <span className="text-xs text-gray-500">{level.label}</span>
+      {/* Risk Breakdown */}
+      <div className="w-full space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[#9ca3af] text-sm">Market Risk</span>
+          <div className="flex items-center gap-2">
+            <div className="w-24 h-2 bg-[#1f2937] rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-[#00A99D] to-[#F5A623] rounded-full transition-all duration-500"
+                style={{ width: '65%' }}
+              />
+            </div>
+            <span className="text-[#f8fafc] text-sm font-medium">65%</span>
           </div>
-        ))}
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-[#9ca3af] text-sm">Volatility</span>
+          <div className="flex items-center gap-2">
+            <div className="w-24 h-2 bg-[#1f2937] rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-[#00A99D] to-[#4A90E2] rounded-full transition-all duration-500"
+                style={{ width: '45%' }}
+              />
+            </div>
+            <span className="text-[#f8fafc] text-sm font-medium">45%</span>
+          </div>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-[#9ca3af] text-sm">Diversification</span>
+          <div className="flex items-center gap-2">
+            <div className="w-24 h-2 bg-[#1f2937] rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-[#00A99D] rounded-full transition-all duration-500"
+                style={{ width: '80%' }}
+              />
+            </div>
+            <span className="text-[#f8fafc] text-sm font-medium">80%</span>
+          </div>
+        </div>
       </div>
     </div>
   );
