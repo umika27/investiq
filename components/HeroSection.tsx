@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Sparkles, TrendingUp, Shield, ArrowRight, ChevronDown, Zap, BarChart3, Users } from "lucide-react";
+import { Sparkles, TrendingUp, Shield, ChevronDown, Zap } from "lucide-react";
 
 // Fixed particle positions to avoid hydration mismatch
 const PARTICLES = [
@@ -143,52 +143,7 @@ export default function HeroSection() {
             </div>
           </div>
           
-          {/* CTA Buttons */}
-          <div 
-            className={`flex flex-col sm:flex-row items-center justify-center gap-4 transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-          >
-            <button 
-              className="group relative bg-gradient-to-r from-[#00A99D] to-[#00D4C8] text-[#0a0f1a] px-10 py-5 text-lg font-semibold rounded-2xl shadow-2xl shadow-[#00A99D]/30 hover:shadow-[#00A99D]/50 transition-all duration-300 hover:scale-105 animate-pulse-glow overflow-hidden"
-            >
-              <span className="relative z-10 flex items-center gap-2">
-                Get Started Free
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-[#00D4C8] to-[#00A99D] opacity-0 group-hover:opacity-100 transition-opacity" />
-            </button>
-            
-            <button 
-              className="group glass px-8 py-5 text-lg font-medium rounded-2xl text-[#f8fafc] hover-lift border border-[#374151] hover:border-[#00A99D]/50 transition-all"
-            >
-              <span className="flex items-center gap-2">
-                Watch Demo
-                <BarChart3 className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-              </span>
-            </button>
           </div>
-          
-          {/* Social Proof */}
-          <div 
-            className={`mt-16 flex flex-col items-center gap-4 transition-all duration-1000 delay-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-          >
-            <div className="flex -space-x-3">
-              {[...Array(5)].map((_, i) => (
-                <div 
-                  key={i}
-                  className="w-10 h-10 rounded-full bg-gradient-to-br from-[#00A99D] to-[#4A90E2] border-2 border-[#0a0f1a] flex items-center justify-center text-sm font-medium"
-                >
-                  {String.fromCharCode(65 + i)}
-                </div>
-              ))}
-              <div className="w-10 h-10 rounded-full bg-[#1f2937] border-2 border-[#0a0f1a] flex items-center justify-center">
-                <Users className="w-4 h-4 text-[#9ca3af]" />
-              </div>
-            </div>
-            <p className="text-[#9ca3af] text-sm">
-              Join <span className="text-[#00A99D] font-semibold">10,000+</span> investors learning smarter
-            </p>
-          </div>
-        </div>
 
         {/* Scroll Indicator */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
