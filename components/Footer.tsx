@@ -18,7 +18,11 @@ export default function Footer() {
     { icon: Mail, href: "#", label: "Email" },
   ];
 
-
+  const footerLinks = [
+    { title: "Product", links: ["Features", "Pricing", "Demo", "Updates"] },
+    { title: "Company", links: ["About", "Blog", "Careers", "Press"] },
+    { title: "Resources", links: ["Documentation", "Help Center", "Community", "Contact"] },
+  ];
 
   return (
     <footer className="relative bg-gradient-to-b from-[#111827] to-[#0a0a0a] text-white overflow-hidden">
