@@ -1,26 +1,31 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Sparkles, TrendingUp, Shield, ArrowRight, ChevronDown, Zap, BarChart3, Users } from "lucide-react";
+
+// Fixed particle positions to avoid hydration mismatch
+const PARTICLES = [
+  { id: 0, left: 15, top: 20, delay: 0, duration: 6 },
+  { id: 1, left: 85, top: 30, delay: 1, duration: 7 },
+  { id: 2, left: 45, top: 10, delay: 2, duration: 8 },
+  { id: 3, left: 70, top: 60, delay: 0.5, duration: 6.5 },
+  { id: 4, left: 25, top: 80, delay: 1.5, duration: 7.5 },
+  { id: 5, left: 55, top: 45, delay: 2.5, duration: 5.5 },
+  { id: 6, left: 10, top: 55, delay: 3, duration: 9 },
+  { id: 7, left: 90, top: 75, delay: 0.8, duration: 6.8 },
+  { id: 8, left: 35, top: 35, delay: 1.8, duration: 7.2 },
+  { id: 9, left: 60, top: 85, delay: 2.2, duration: 8.5 },
+  { id: 10, left: 80, top: 15, delay: 3.5, duration: 5.8 },
+  { id: 11, left: 20, top: 50, delay: 4, duration: 6.2 },
+  { id: 12, left: 50, top: 70, delay: 1.2, duration: 7.8 },
+  { id: 13, left: 75, top: 40, delay: 2.8, duration: 8.2 },
+  { id: 14, left: 5, top: 90, delay: 0.3, duration: 9.5 },
+];
 
 export default function HeroSection() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isVisible, setIsVisible] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-
-  // Generate particle positions only after mounting to avoid hydration mismatch
-  const particles = useMemo(() => {
-    if (!isMounted) return [];
-    return [...Array(20)].map((_, i) => ({
-      id: i,
-      left: Math.random() * 100,
-      top: Math.random() * 100,
-      delay: Math.random() * 5,
-      duration: 5 + Math.random() * 5,
-    }));
-  }, [isMounted]);
 
   useEffect(() => {
-    setIsMounted(true);
     setIsVisible(true);
     const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({
@@ -62,7 +67,7 @@ export default function HeroSection() {
 
           {/* Animated particles */}
           <div className="absolute inset-0 overflow-hidden">
-            {particles.map((particle) => (
+            {PARTICLES.map((particle) => (
               <div
                 key={particle.id}
                 className="absolute w-1 h-1 bg-[#00A99D]/40 rounded-full animate-float"
