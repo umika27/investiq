@@ -10,18 +10,8 @@ interface AllocationData {
   color: string;
 }
 
-const renderActiveShape = (props: {
-  cx: number;
-  cy: number;
-  innerRadius: number;
-  outerRadius: number;
-  startAngle: number;
-  endAngle: number;
-  fill: string;
-  payload: { name: string };
-  percent: number;
-  value: number;
-}) => {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const renderActiveShape = (props: any) => {
   const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, value } = props;
 
   return (
