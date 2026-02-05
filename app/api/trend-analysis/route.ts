@@ -51,9 +51,10 @@ Provide a JSON response with EXACTLY this structure (no markdown, no code blocks
 }`
 
     const result = streamText({
-      model: xai('grok-4', {
-        apiKey: process.env.XAI_API_KEY,
-      }),
+      model: xai({
+  model: 'grok-4',
+  apiKey: process.env.XAI_API_KEY,
+}),
       prompt,
       system: 'You are a helpful financial analyst AI. Always respond with valid JSON only, no markdown formatting or code blocks. Provide educational and insightful analysis suitable for beginner investors.',
     })

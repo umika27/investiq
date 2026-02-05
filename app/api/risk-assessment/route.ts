@@ -38,9 +38,10 @@ Format your response as JSON:
 }`
 
     const result = streamText({
-      model: xai('grok-4', {
-        apiKey: process.env.XAI_API_KEY,
-      }),
+      xai({
+  model: 'grok-4',
+  apiKey: process.env.XAI_API_KEY,
+}),
       prompt: prompt,
       system: 'You are a professional financial advisor AI. Provide accurate, helpful investment risk assessments. Always respond with valid JSON only, no additional text.',
     })
