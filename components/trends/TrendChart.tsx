@@ -65,8 +65,8 @@ export default function TrendChart() {
         Data points: {data.length}
       </p>
 
-      <div style={{ width: "100%", height: 300 }}>
-        <ResponsiveContainer>
+      <div className="w-full h-[300px] min-h-[300px]">
+        <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="month" />
