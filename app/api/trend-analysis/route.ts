@@ -1,6 +1,10 @@
 import { streamText } from 'ai'
-import { xai } from '@ai-sdk/xai'
+import { createXai } from '@ai-sdk/xai'
 import type { NextRequest } from 'next/server'
+
+const xai = createXai({
+  apiKey: process.env.XAI_API_KEY,
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,9 +37,7 @@ Provide:
 Keep response concise (3-4 sentences total). Focus on educational value.`
 
     const result = streamText({
-      model: xai('grok-4', {
-        apiKey: process.env.XAI_API_KEY,
-      }),
+      model: xai('grok-3-mini-fast'),
       prompt: prompt,
       system: 'You are a financial educator AI. Explain market trends in simple terms that beginner investors can understand. Be educational and encouraging, while noting that past performance does not guarantee future results.',
     })

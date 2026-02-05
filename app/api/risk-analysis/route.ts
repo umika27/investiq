@@ -1,6 +1,10 @@
 import { streamText } from 'ai'
-import { xai } from '@ai-sdk/xai'
+import { createXai } from '@ai-sdk/xai'
 import type { NextRequest } from 'next/server'
+
+const xai = createXai({
+  apiKey: process.env.XAI_API_KEY,
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,9 +27,7 @@ Provide a brief analysis (2-3 sentences) covering:
 Keep it concise and practical for beginner investors.`
 
     const result = streamText({
-      model: xai('grok-4', {
-        apiKey: process.env.XAI_API_KEY,
-      }),
+      model: xai('grok-3-mini-fast'),
       prompt: prompt,
       system: 'You are a financial advisor AI. Provide clear, concise risk assessments for investment portfolios. Be helpful but remind users this is educational, not financial advice.',
     })
