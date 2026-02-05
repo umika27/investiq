@@ -38,7 +38,7 @@ Format your response as JSON:
 }`
 
     const result = streamText({
-      xai({
+      model: xai({
   model: 'grok-4',
   apiKey: process.env.XAI_API_KEY,
 }),
